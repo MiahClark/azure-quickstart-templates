@@ -47,6 +47,12 @@
       },
       "minLength": 8
     },
+    "dnsPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The DNS prefix for the public IP address used by the Load Balancer"
+      }
+    },
     "VMSize": {
       "type": "string",
       "metadata": {
@@ -200,12 +206,18 @@
         "description": "SAS storage token to access _artifactsLocation. No need to change unless you copy or fork this template."
       },
       "defaultValue": ""
-    }
+    },
   },
   "variables": {
     "adNSGName": "[concat(parameters('adSubnetName'),'NSG')]",
     "adAvailabilitySetNameRoot": "AvailSetRoot",
     "adAvailabilitySetNameChild": "AvailSetChild",
+    "publicIPSKU": "Standard",
+    "publicIPAddressName": "adPublicIp",
+    "publicIPAddressType": "Static",
+    "publicIpAddressId": {
+      "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+    },
 
     "firstVMTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/CreateAndPrepnewVM.json',parameters('_artifactsLocationSasToken')))]",
     "nextVMTemplateUri": "[uri(parameters('_artifactsLocation'), concat('nested/CreateAndPrepnewVM.json',parameters('_artifactsLocationSasToken')))]",
@@ -243,6 +255,24 @@
       "properties": {
         "PlatformUpdateDomainCount": 3,
         "PlatformFaultDomainCount": 2
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-11-01",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('publicIPSKU')]"
+      },
+      "zones": [
+        "1"
+      ],
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsPrefix')]"
+        }
       }
     },
     {
